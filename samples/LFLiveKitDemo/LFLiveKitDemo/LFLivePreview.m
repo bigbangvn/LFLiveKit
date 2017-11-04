@@ -11,6 +11,8 @@
 #import "UIView+YYAdd.h"
 #import "LFLiveKit.h"
 
+#define LIVE_URL @"rtmp://192.168.1.246:1935/live/livestream";// @"rtmp://live.hkstv.hk.lxdns.com:1935/live/stream153";
+
 inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     if (elapsed_milli <= 0) {
         return @"N/A";
@@ -118,19 +120,19 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
     NSLog(@"liveStateDidChange: %ld", state);
     switch (state) {
     case LFLiveReady:
-        _stateLabel.text = @"未连接";
+        _stateLabel.text = @"Ready";
         break;
     case LFLivePending:
-        _stateLabel.text = @"连接中";
+        _stateLabel.text = @"Pending";
         break;
     case LFLiveStart:
-        _stateLabel.text = @"已连接";
+        _stateLabel.text = @"Start";
         break;
     case LFLiveError:
-        _stateLabel.text = @"连接错误";
+        _stateLabel.text = @"Error";
         break;
     case LFLiveStop:
-        _stateLabel.text = @"未连接";
+        _stateLabel.text = @"Stop";
         break;
     default:
         break;
@@ -158,15 +160,15 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
         /***   默认分辨率368 ＊ 640  音频：44.1 iphone6以上48  双声道  方向竖屏 ***/
         LFLiveVideoConfiguration *videoConfiguration = [LFLiveVideoConfiguration new];
         videoConfiguration.videoSize = CGSizeMake(640, 360);
-        videoConfiguration.videoBitRate = 800*1024;
-        videoConfiguration.videoMaxBitRate = 1000*1024;
-        videoConfiguration.videoMinBitRate = 500*1024;
-        videoConfiguration.videoFrameRate = 24;
-        videoConfiguration.videoMaxKeyframeInterval = 48;
+        videoConfiguration.videoBitRate = 100 * 1024;// 800*1024;
+        videoConfiguration.videoMaxBitRate = 120 * 1024; //1000*1024;
+        videoConfiguration.videoMinBitRate = 100 * 1024; //500*1024;
+        videoConfiguration.videoFrameRate = 15; //24;
+        videoConfiguration.videoMaxKeyframeInterval = 0; //48;
         videoConfiguration.outputImageOrientation = UIInterfaceOrientationLandscapeLeft;
         videoConfiguration.autorotate = NO;
-        videoConfiguration.sessionPreset = LFCaptureSessionPreset720x1280;
-        _session = [[LFLiveSession alloc] initWithAudioConfiguration:[LFLiveAudioConfiguration defaultConfiguration] videoConfiguration:videoConfiguration captureType:LFLiveCaptureDefaultMask];
+        videoConfiguration.sessionPreset = LFCaptureSessionPreset360x640;// LFCaptureSessionPreset720x1280;
+        _session = [[LFLiveSession alloc] initWithAudioConfiguration:[LFLiveAudioConfiguration defaultConfigurationForQuality:LFLiveAudioQuality_Low] videoConfiguration:videoConfiguration captureType:LFLiveCaptureDefaultMask];
 
         /**    自己定制单声道  */
         /*
@@ -286,7 +288,7 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
 - (UILabel *)stateLabel {
     if (!_stateLabel) {
         _stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 80, 40)];
-        _stateLabel.text = @"未连接";
+        _stateLabel.text = @"Not connected";
         _stateLabel.textColor = [UIColor whiteColor];
         _stateLabel.font = [UIFont boldSystemFontOfSize:14.f];
     }
@@ -350,19 +352,19 @@ inline static NSString *formatedSpeed(float bytes, float elapsed_milli) {
         _startLiveButton.layer.cornerRadius = _startLiveButton.height/2;
         [_startLiveButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [_startLiveButton.titleLabel setFont:[UIFont systemFontOfSize:16]];
-        [_startLiveButton setTitle:@"开始直播" forState:UIControlStateNormal];
+        [_startLiveButton setTitle:@"Start stream" forState:UIControlStateNormal];
         [_startLiveButton setBackgroundColor:[UIColor colorWithRed:50 green:32 blue:245 alpha:1]];
         _startLiveButton.exclusiveTouch = YES;
         __weak typeof(self) _self = self;
         [_startLiveButton addBlockForControlEvents:UIControlEventTouchUpInside block:^(id sender) {
             _self.startLiveButton.selected = !_self.startLiveButton.selected;
             if (_self.startLiveButton.selected) {
-                [_self.startLiveButton setTitle:@"结束直播" forState:UIControlStateNormal];
+                [_self.startLiveButton setTitle:@"Stop stream" forState:UIControlStateNormal];
                 LFLiveStreamInfo *stream = [LFLiveStreamInfo new];
-                stream.url = @"rtmp://live.hkstv.hk.lxdns.com:1935/live/stream153";
+                stream.url = LIVE_URL;
                 [_self.session startLive:stream];
             } else {
-                [_self.startLiveButton setTitle:@"开始直播" forState:UIControlStateNormal];
+                [_self.startLiveButton setTitle:@"Start stream" forState:UIControlStateNormal];
                 [_self.session stopLive];
             }
         }];
